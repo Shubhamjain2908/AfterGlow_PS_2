@@ -14,33 +14,37 @@ router.post('/addData', function(req, res, next) {
   MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("ag");
-
+    // dbo.collection("customers").remove({}).then(data => console.log(data)).catch(e => console.log(e)); // deleting all elements
     dbo.collection("customers").find({}).toArray(function(err, result) {
       if (err) throw err;
-      console.log(result.length);
+      // console.log(result.length);
       if (result.length > 30) {
         for (let index = 0; index < 5; index++) {
           var myquery = { _id: result[index]._id };
           dbo.collection("customers").deleteOne(myquery, function(err, obj) {
             if (err) throw err;
-            console.log("Records deleted");
+            console.log("Records deleted with id: " + result[index]._id);
           });
         }
       }
-
       // save
-      var myobj = { _id: result.slice(-1)[0]._id + 1 , value: req.body.value };
+      if (result.slice(-1)[0] !== undefined) {
+        var myobj = { _id: result.slice(-1)[0]._id + 1 , value: req.body.value };   // Last id + 1  
+      } else {
+        var myobj = { _id: 1 , value: req.body.value };   // Last id + 1
+      }
       dbo.collection("customers").insertOne(myobj, function(err, res) {
         if (err) throw err;
         console.log("Record inserted");
       });
       db.close();
+      res.json({
+        "Message":result
+      });
     });
   });
 
-  res.json({
-    "Message":"Success"
-  });
+  
 
 })
 module.exports = router;
